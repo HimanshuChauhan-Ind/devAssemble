@@ -1,9 +1,13 @@
 const express = require("express");
+const connectDB = require("./utils/database");
 
 const app = express();
 
-app.use((req, res) => {
-  res.send("Hello World");
-});
-
-app.listen(3000, () => console.log("Server is reunning on port 3000"));
+connectDB()
+  .then(() => {
+    console.log("Connected to Database.....");
+    app.listen(3000, () => console.log("Server is reunning on port 3000"));
+  })
+  .catch((err) => {
+    console.log("Error connecting to databse", err);
+  });
