@@ -10,6 +10,10 @@ app.post("/signUp", async (req, res) => {
   const user = new User(req.body);
 
   try {
+    if (user.skills.length > 10) {
+      throw new Error("You can add upto 10 skills");
+    }
+
     await user.save();
 
     res.send("User added successfully");
@@ -45,14 +49,26 @@ app.get("/feed", async (req, res) => {
   }
 });
 
-app.patch("/updateUser", async (req, res) => {
-  const userId = req.body.userId;
+app.patch("/updateUser/:userId", async (req, res) => {
+  const userId = req.params?.userId;
   const data = req.body;
   try {
+    const ALLOWED_UPDATES = ["firstName", "lastName", "about", "skills"];
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATES.includes(k)
+    );
+    if (!isUpdateAllowed) {
+      throw new Error("Some field updates are not allowed");
+    }
+
+    if (data.skills && data.skills.length > 10) {
+      throw new Error("You can only add upto 10 skills");
+    }
+
     await User.findByIdAndUpdate(userId, data);
     res.send("User updated successfully");
   } catch (err) {
-    console.log("Unable to update user", err);
+    res.send("Unable to update user" + err);
   }
 });
 
