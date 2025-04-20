@@ -1,24 +1,52 @@
 const express = require("express");
 const connectDB = require("./utils/database");
 const User = require("./models/user");
+const validator = require("validator");
+const { validateUser } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 const app = express();
 
 app.use(express.json());
 
 app.post("/signUp", async (req, res) => {
-  const user = new User(req.body);
-
   try {
-    if (user.skills.length > 10) {
-      throw new Error("You can add upto 10 skills");
-    }
+    validateUser(req);
+    const { firstName, lastName, email, password } = req.body;
 
+    const userPassword = await bcrypt.hash(password, 10);
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      password: userPassword,
+    });
     await user.save();
 
     res.send("User added successfully");
   } catch (err) {
-    console.log("Unable to add user: " + err);
+    res.status(400).send("Unable to add user: " + err);
+  }
+});
+
+app.post("/signIn", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!validator.isEmail(email)) {
+      throw new Error("Please enter a valid Email");
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error("Invalid Credentials");
+    }
+    const isValidUser = await bcrypt.compare(password, user.password);
+    if (isValidUser) {
+      res.send("Welcome back!!");
+    } else {
+      throw new Error("Invalid Credentials");
+    }
+  } catch (err) {
+    res.status(400).send("ERROR: " + err);
   }
 });
 
