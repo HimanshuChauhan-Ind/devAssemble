@@ -6,6 +6,7 @@ const { validateUser } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth");
 
 const app = express();
 
@@ -55,81 +56,20 @@ app.post("/signIn", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const token = req.cookies.token;
-    if (!token) {
-      throw new Error("Not a valid Token");
-    }
-
-    const userInfo = await jwt.verify(token, "aslkdfjasdlkf");
-    if (!userInfo) {
-      throw new Error("Not a valid User");
-    }
-    const user = await User.findById(userInfo._id);
-    res.send(user);
+    res.send(req.user);
   } catch (err) {
     res.status(400).send("ERROR: " + err);
   }
 });
 
-app.get("/userbyemail", async (req, res) => {
-  const { email } = req.body;
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
   try {
-    const user = await User.findOne({ email });
-    if (user.length === 0) {
-      res.status(404).send("User not found");
-    } else {
-      res.send(user);
-    }
+    console.log("Send the request");
+    res.send("Request sent by: " + req.user.firstName);
   } catch (err) {
-    console.log("Unable to find user", err);
-  }
-});
-
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find();
-    if (users.length === 0) {
-      res.status(404).send("No users found");
-    } else {
-      res.send(users);
-    }
-  } catch (err) {
-    console.log("Unable to find users", err);
-  }
-});
-
-app.patch("/updateUser/:userId", async (req, res) => {
-  const userId = req.params?.userId;
-  const data = req.body;
-  try {
-    const ALLOWED_UPDATES = ["firstName", "lastName", "about", "skills"];
-    const isUpdateAllowed = Object.keys(data).every((k) =>
-      ALLOWED_UPDATES.includes(k)
-    );
-    if (!isUpdateAllowed) {
-      throw new Error("Some field updates are not allowed");
-    }
-
-    if (data.skills && data.skills.length > 10) {
-      throw new Error("You can only add upto 10 skills");
-    }
-
-    await User.findByIdAndUpdate(userId, data);
-    res.send("User updated successfully");
-  } catch (err) {
-    res.send("Unable to update user" + err);
-  }
-});
-
-app.delete("/removeUser", async (req, res) => {
-  const userId = req.body.userId;
-  try {
-    await User.findByIdAndDelete(userId);
-    res.send("User Delted Successfully");
-  } catch (err) {
-    console.log("Unable to delete the user", err);
+    res.status(400).send("ERROR: " + err.message);
   }
 });
 
