@@ -54,6 +54,14 @@ const userSchema = new mongoose.Schema(
     skills: {
       type: [String],
     },
+    photoUrl: {
+      type: String,
+      validate(url) {
+        if (!validator.isURL(url)) {
+          throw new Error("Please Enter valid photo URL");
+        }
+      },
+    },
   },
   { timestamps: true }
 );
