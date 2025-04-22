@@ -42,4 +42,35 @@ requestRouter.post(
   }
 );
 
+requestRouter.patch(
+  "/request/send/:status/:requestId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const loggedInUser = req.user;
+      const { status, requestId } = req.params;
+      const VALID_STATUS = ["accepted", "rejected"];
+      if (!VALID_STATUS.includes(status)) {
+        return res.status(400).json({ message: "Not the valid Status!" });
+      }
+      const request = await ConnectionRequest.findOne({
+        _id: requestId,
+        toUserId: loggedInUser._id,
+        status: "intetrested",
+      });
+      if (!request) {
+        return res.status(404).json({ message: "Request does not exist!" });
+      }
+      request.status = status;
+      const data = await request.save();
+      res.json({
+        message: status,
+        data,
+      });
+    } catch (error) {
+      throw new Error("ERROR: " + error.message);
+    }
+  }
+);
+
 module.exports = requestRouter;
