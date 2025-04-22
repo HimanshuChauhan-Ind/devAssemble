@@ -43,16 +43,16 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
     return res.status(400).json({ err });
   }
 });
-/*
-Feed api:
-show all the users of the app except the connection request that are in state: ignored, rejected
-*/
+
 userRouter.get("/user/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
-
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    limit = limit > 100 ? 100 : limit;
+    const skip = (page - 1) * limit;
     const connectionRequestSent = await ConnectionRequest.find({
-      $or: [{ fromUserId: loggedInUser._id }, { ttoUserId: loggedInUser._id }],
+      $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
     }).select("fromUserId toUserId");
 
     const hideUsers = new Set();
@@ -63,7 +63,10 @@ userRouter.get("/user/feed", userAuth, async (req, res) => {
 
     const feed = await User.find({
       _id: { $nin: Array.from(hideUsers) },
-    }).select("firstName lastName");
+    })
+      .select("firstName lastName")
+      .skip(skip)
+      .limit(limit);
 
     res.json({ feed });
   } catch (err) {
