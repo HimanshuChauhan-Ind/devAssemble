@@ -24,6 +24,7 @@ const validateEdit = (req) => {
     "about",
     "gender",
     "skills",
+    "photoUrl",
   ];
 
   const isEditAllowed = Object.keys(req.body).every((key) =>
