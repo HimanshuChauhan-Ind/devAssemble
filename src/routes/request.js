@@ -12,7 +12,7 @@ requestRouter.post(
       const fromUser = req.user;
       const { status, toUserId } = req.params;
 
-      const VALID_STATUS = ["ignored", "intetrested"];
+      const VALID_STATUS = ["ignored", "interested"];
       if (!VALID_STATUS.includes(status)) {
         throw new Error("Invalid Request");
       }
